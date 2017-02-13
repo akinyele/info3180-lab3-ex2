@@ -4,9 +4,24 @@ Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
 Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
-
+import smtplib
 from app import app
-from flask import render_template, request, redirect, url_for
+app.secret_key = 'super secret key'
+    
+from flask import render_template, request, redirect, url_for , flash 
+
+
+
+from_addr = '{}'
+to_addr = 'akinyelethompson@gmail.com'
+from_name = 'akinyele'
+to_name = 'Akinyele'
+message = """From: {} <{}>
+            To: {} <{}> 
+            Subject: {}
+            {}
+            """
+
 
 
 ###
@@ -23,6 +38,36 @@ def home():
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
+    
+@app.route('/contact', methods=['POST','GET'] )
+def contact():
+    """ Render the website's contact page"""
+    error = None
+    if request.method == 'POST':
+        name=request.form['Name']
+        email=request.form['Email']
+        subject=request.form['Subject']
+        message=request.form['Message']
+    
+        send_email(name, email, subject, message)
+        flash('Message sent successfuly')
+        return redirect(url_for('home'))
+            
+    return render_template('contact.html', error = error)
+    
+    
+def send_email(from_name, from_email, subject, msg):
+    message_to_send = message.format(from_name, from_email, to_name,to_addr, subject, msg)
+    # Credentials (if needed)
+    username = 'akinyelethompson@gmail.com'
+    password = 'dkcaejujnuflqyiy'
+    # The actual mail send
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.starttls()
+    server.login(username, password)
+    server.sendmail(from_addr, to_addr, message_to_send)
+    server.quit()
+    
 
 
 ###
@@ -54,4 +99,8 @@ def page_not_found(error):
 
 
 if __name__ == '__main__':
+    app.config['SESSION_TYPE'] = 'filesystem'
+
+    
+    app.debug = True
     app.run(debug=True,host="0.0.0.0",port="8080")
